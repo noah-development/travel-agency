@@ -1,0 +1,29 @@
+[project]
+name = "travel-agency"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["apps/orchestrator", "libs/*", "tools"]
+
+[dependency-groups]
+dev = ["ruff>=0.6", "pytest>=8"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["apps/orchestrator/src", "libs", "tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["apps/orchestrator", "libs", "tools"]
+addopts = "-ra"
