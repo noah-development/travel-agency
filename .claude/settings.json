@@ -30,5 +30,26 @@
       "Bash(git branch -D*)",
       "Bash(docker*)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "python",
+              "-c",
+              "import json, sys, subprocess\nd = json.load(sys.stdin)\npath = d.get('tool_input', {}).get('file_path')\nif not path:\n    sys.exit(0)\nsys.exit(subprocess.run(['uv', 'run', 'python', 'tools/check_portability.py', path]).returncode)"
+            ],
+            "timeout": 30,
+            "statusMessage": "Checking cloud portability"
+          }
+        ]
+      }
+    ]
   }
 }

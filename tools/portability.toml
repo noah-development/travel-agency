@@ -1,0 +1,32 @@
+# Configuration for tools/check_portability.py
+#
+# `forbidden` lists package/module names that may not be imported outside
+# `infra/adapters/`. Entries may end in `*` to match any name with that
+# prefix (e.g. "azure-*" matches "azure-storage-blob"). Matching is done
+# against the top-level package name of each import (the part before the
+# first dot), so "boto3" also blocks "import boto3.session".
+#
+# `exceptions` lists path prefixes (relative to the repo root, forward
+# slashes) that are allowed to import forbidden packages: the adapters
+# themselves, and tests that exercise them.
+#
+# Add new entries here, not in code.
+
+[packages]
+forbidden = [
+    "boto3",
+    "botocore",
+    "aws-cdk-lib",
+    "@aws-sdk/*",
+    "azure-*",
+    "@azure/*",
+    "google-cloud-*",
+    "@google-cloud/*",
+]
+
+[exceptions]
+paths = [
+    "infra/adapters/",
+    "infra/adapters/tests/",
+    "tools/tests/test_check_portability.py",
+]

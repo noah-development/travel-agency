@@ -37,4 +37,12 @@ TypeScript:
 pnpm install
 ```
 
+### Git hooks
+
+Install the pre-commit hooks once after `uv sync`:
+
+```
+uv run pre-commit install
+```
+
 Design decisions live in [docs/decisions](docs/decisions).
