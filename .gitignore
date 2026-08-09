@@ -39,6 +39,9 @@ obj/
 .vscode/*
 !.vscode/extensions.json
 
+# --- Claude Code (personal overrides) ---
+.claude/settings.local.json
+
 # --- Env files (never commit real secrets) ---
 .env
 .env.*
