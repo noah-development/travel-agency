@@ -27,7 +27,7 @@ uv run pytest
 
 TypeScript: `pnpm install`
 
-Local infra: `docker compose -f infra/compose/docker-compose.yml up -d`
+Local infra: `python tools/dev.py up`
 
 ## Rules
 

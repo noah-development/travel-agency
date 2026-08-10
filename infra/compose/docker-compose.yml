@@ -1,0 +1,109 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_KEYCLOAK_DB: ${POSTGRES_KEYCLOAK_DB}
+      POSTGRES_KEYCLOAK_USER: ${POSTGRES_KEYCLOAK_USER}
+      POSTGRES_KEYCLOAK_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+      POSTGRES_TRAVEL_DB: ${POSTGRES_TRAVEL_DB}
+      POSTGRES_TRAVEL_USER: ${POSTGRES_TRAVEL_USER}
+      POSTGRES_TRAVEL_PASSWORD: ${POSTGRES_TRAVEL_PASSWORD}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command: ["start-dev", "--import-realm"]
+    restart: unless-stopped
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_KEYCLOAK_DB}
+      KC_DB_USERNAME: ${POSTGRES_KEYCLOAK_USER}
+      KC_DB_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      # Only the app port is published. The management port (9000), where
+      # the health endpoints live, is reached from the healthcheck below
+      # over the internal Compose network only — never published to the host.
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ../keycloak/realms:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # The image ships no curl. This is Keycloak's own documented technique
+      # for readiness checks without one: a bash /dev/tcp socket redirect
+      # against the management port, checking the HTTP status line (not the
+      # JSON body, whose exact spacing isn't guaranteed stable across
+      # versions). CMD (not CMD-SHELL) is used because CMD-SHELL runs
+      # /bin/sh, which may not be bash; bash is invoked explicitly instead.
+      # See https://www.keycloak.org/observability/health.
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          { printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0;
+          grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      # First boot against an empty database includes Keycloak's schema
+      # migration, which on Docker Desktop over Windows can take longer
+      # than interval * retries alone would allow. Without start_period,
+      # failed attempts during that window count against retries and
+      # depends_on: condition: service_healthy never gets satisfied.
+      start_period: 60s
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    profiles: ["messaging"]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    profiles: ["mssql"]
+    environment:
+      ACCEPT_EULA: ${MSSQL_ACCEPT_EULA}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      # Caps the engine's own buffer pool inside the container's memory
+      # limit below (see deploy.resources.limits.memory for why 3g/2048MB).
+      MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB}
+    ports:
+      - "127.0.0.1:1433:1433"
+    deploy:
+      resources:
+        limits:
+          # Container ceiling: 3g. SQL Server needs ~2GB just to start, so a
+          # container limit of exactly 2g kills it on boot; MSSQL_MEMORY_LIMIT_MB
+          # above (2048) caps the engine's own usage inside this headroom.
+          memory: 3g
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  mssql-data:
