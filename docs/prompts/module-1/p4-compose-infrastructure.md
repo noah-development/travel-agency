@@ -40,7 +40,7 @@ Configura la infraestructura local del proyecto con Docker Compose. Contexto: Wi
 
 4. Un custom command en .claude/commands/infra.md que invoque tools/dev.py status y reporte de forma compacta qué está arriba y qué no.
 
-5. docs/decisiones/0003-infraestructura-local.md documentando: una sola instancia de Postgres con dos bases en local pero separadas en producción y por qué; perfiles de Compose para diferir RabbitMQ y SQL Server; puertos solo en loopback; tags fijados en vez de latest.
+5. docs/decisions/0003-infraestructura-local.md documentando: una sola instancia de Postgres con dos bases en local pero separadas en producción y por qué; perfiles de Compose para diferir RabbitMQ y SQL Server; puertos solo en loopback; tags fijados en vez de latest.
 
 6. Actualiza el README con los comandos de tools/dev.py.
 

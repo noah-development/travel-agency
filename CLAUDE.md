@@ -37,6 +37,7 @@ Local infra: `docker compose -f infra/compose/docker-compose.yml up -d`
   `.env.example` with placeholders.
 - **Repo tooling** (scripts under `tools/`) is written in Python, never
   Bash, so it runs identically on Windows and Linux CI.
+- **Naming**: files, folders, commands, agents, and code identifiers are named in English; prose inside `docs/decisions/` ADRs and `docs/prompts/` prompts may stay in the language it was written in.
 
 ## Commits and branches
 

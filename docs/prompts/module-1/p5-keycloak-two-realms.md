@@ -33,6 +33,6 @@ Son DOS realms, no un realm con dos roles. Razón: administradores y clientes so
 
 7. Agrega UNA línea al CLAUDE.md: los realms se editan como código en infra/keycloak/realms/; si se cambia algo en la consola de Keycloak, hay que exportar antes de commitear. Solo esa línea; el CLAUDE.md no crece con explicaciones.
 
-8. docs/decisiones/0004-identidad-dos-realms.md: dos realms sobre un realm con roles, con el trade-off de SSO explícito; clientes públicos con PKCE sobre confidenciales dado el repo público; validación estricta de audiencia.
+8. docs/decisions/0004-identidad-dos-realms.md: dos realms sobre un realm con roles, con el trade-off de SSO explícito; clientes públicos con PKCE sobre confidenciales dado el repo público; validación estricta de audiencia.
 
 Verifica que `python tools/dev.py reset` seguido de `python tools/verify_auth.py` pasa en limpio, incluyendo la aserción negativa entre realms.
