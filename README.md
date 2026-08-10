@@ -39,10 +39,15 @@ pnpm install
 
 ### Git hooks
 
-Install the pre-commit hooks once after `uv sync`:
+Install the pre-commit hooks once after `uv sync`. This project uses two
+separate hook types, so both installs are required:
 
 ```
 uv run pre-commit install
+uv run pre-commit install --hook-type commit-msg
 ```
+
+The second one enables the conventional-commit check on commit messages;
+skipping it is the most common way this ends up not actually enforced.
 
 Design decisions live in [docs/decisions](docs/decisions).

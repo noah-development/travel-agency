@@ -40,5 +40,5 @@ Local infra: `docker compose -f infra/compose/docker-compose.yml up -d`
 
 ## Commits and branches
 
-- Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, ...).
+- Conventional commits, validated by the `commit-msg` pre-commit hook.
 - Branches: `type/short-description` (e.g. `feat/flight-search`).
