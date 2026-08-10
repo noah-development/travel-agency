@@ -50,3 +50,6 @@ obj/
 # --- OS ---
 Thumbs.db
 .DS_Store
+
+# --- Downloaded tool binaries ---
+tools/.bin/

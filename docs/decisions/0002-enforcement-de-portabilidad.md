@@ -81,6 +81,23 @@ other three (`lint`, `secrets`, `tests`) are included because requiring
 one check but not the others leaves gaps equivalent to the problem this
 document is trying to solve.
 
+## Addendum (2026-08-09): gitleaks CLI instead of gitleaks-action
+
+The `secrets` job originally ran `gitleaks/gitleaks-action`. That Action
+requires a paid license (`GITLEAKS_LICENSE`) for organization-owned
+repositories; without one the job fails outright, regardless of whether
+any secret is present. The `gitleaks` CLI itself is MIT-licensed and free
+to use anywhere, including in CI, so the job now downloads and runs the
+CLI binary directly (`tools/install_gitleaks.py`) instead of going
+through the Action wrapper.
+
+The binary is pinned to an explicit version (never `latest`) and its
+sha256 checksum is verified before it is executed, since an unverified
+binary download in CI is a supply-chain vector. `gitleaks detect` runs
+with `--redact` so that, if a real secret is ever found, its value is not
+printed into the (public) Actions log — only the fact that something was
+found, the rule that matched, and its location.
+
 ## Consequences
 
 - A forbidden import has to survive three independent checks to reach

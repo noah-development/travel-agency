@@ -1,0 +1,16 @@
+title = "travel-agency gitleaks config"
+
+# Start from gitleaks' built-in default ruleset (https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml)
+# and add repo-specific rules/allowlist entries on top of it, instead of
+# maintaining our own copy of every upstream rule.
+[extend]
+useDefault = true
+
+[allowlist]
+# Empty on purpose. Kept present so that the first time a false positive
+# shows up, whoever fixes it only has to add a `regexes`/`paths`/`stopwords`
+# entry here, not invent the [[allowlist]] structure from scratch.
+#
+# Example:
+# regexes = ['''example-false-positive-pattern''']
+# paths = ['''path/to/file/that/is/always/a/false/positive''']

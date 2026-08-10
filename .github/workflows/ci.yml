@@ -34,9 +34,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: astral-sh/setup-uv@v3
+      - name: Install gitleaks (pinned, checksum-verified)
+        run: |
+          uv run python tools/install_gitleaks.py "$RUNNER_TEMP/gitleaks-bin"
+          echo "$RUNNER_TEMP/gitleaks-bin" >> "$GITHUB_PATH"
+      - name: Run gitleaks detect
+        run: gitleaks detect --source . --config .gitleaks.toml --redact --verbose --exit-code 1
 
   tests:
     runs-on: ubuntu-latest
