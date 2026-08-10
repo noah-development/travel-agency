@@ -71,6 +71,39 @@ def test_build_compose_argv_logs_without_service():
     assert argv[-2:] == ["logs", "-f"]
 
 
+def test_build_export_argv_targets_scratch_dir_not_realms_dir():
+    argv = dev.build_export_argv("travel-customers")
+
+    volume_flag = argv[argv.index("-v") + 1]
+    assert volume_flag == f"{dev.KEYCLOAK_EXPORT_DIR}:/tmp/kc-export"
+    assert dev.KEYCLOAK_EXPORT_DIR != dev.REPO_ROOT / "infra" / "keycloak" / "realms"
+
+
+def test_build_export_argv_takes_exactly_one_realm_flag():
+    # kc.sh export only honors the last --realm flag given, so this must
+    # never build an argv with more than one -- see build_export_argv's
+    # docstring for why multiple --realm flags on one call would silently
+    # export only the last realm instead of failing loudly.
+    argv = dev.build_export_argv("travel-admin")
+
+    realm_flags = [argv[i + 1] for i, tok in enumerate(argv) if tok == "--realm"]
+    assert realm_flags == ["travel-admin"]
+
+
+def test_build_export_argv_runs_against_keycloak_service():
+    argv = dev.build_export_argv("travel-customers")
+
+    run_index = argv.index("run")
+    assert argv[run_index : run_index + 6] == [
+        "run",
+        "--rm",
+        "-v",
+        f"{dev.KEYCLOAK_EXPORT_DIR}:/tmp/kc-export",
+        "keycloak",
+        "export",
+    ]
+
+
 def test_find_unfilled_vars_detects_change_me(tmp_path):
     env_file = tmp_path / ".env"
     env_file.write_text(

@@ -53,3 +53,6 @@ Thumbs.db
 
 # --- Downloaded tool binaries ---
 tools/.bin/
+
+# --- Keycloak export scratch output (see tools/dev.py keycloak-export) ---
+infra/keycloak/exports/

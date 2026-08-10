@@ -19,7 +19,7 @@ language used in conversation with the user.
 
 Python (from repo root):
 ```
-uv sync
+uv sync --all-packages
 uv run ruff check .
 uv run ruff format --check .
 uv run pytest
@@ -38,6 +38,7 @@ Local infra: `python tools/dev.py up`
 - **Repo tooling** (scripts under `tools/`) is written in Python, never
   Bash, so it runs identically on Windows and Linux CI.
 - **Naming**: files, folders, commands, agents, and code identifiers are named in English; prose inside `docs/decisions/` ADRs and `docs/prompts/` prompts may stay in the language it was written in.
+- **Keycloak realms**: hand-edited as code in `infra/keycloak/realms/`; console changes must be exported to `infra/keycloak/exports/` (`tools/dev.py keycloak-export`) and manually ported into the canonical files — the export is never committed or copied over as-is.
 
 ## Commits and branches
 

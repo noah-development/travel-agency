@@ -1,0 +1,157 @@
+{
+  "realm": "travel-admin",
+  "enabled": true,
+  "displayName": "Travel Agency - Back office",
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Full back-office administrator."
+      },
+      {
+        "name": "agent",
+        "description": "Travel agent with day-to-day operational access."
+      }
+    ]
+  },
+  "clientScopes": [
+    {
+      "name": "admin-api-audience",
+      "description": "Injects admin-api into aud so the resource server can validate audience strictly instead of trusting issuer alone.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-admin-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "admin-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "back-office",
+      "name": "Back office (Angular) - public client, authorization code + PKCE",
+      "description": "Real admin/agent-facing front end. No client secret: public clients cannot leak one. directAccessGrantsEnabled is deliberately false -- password grant lives only on verifier-cli.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "redirectUris": ["http://localhost:4200/*"],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["admin-api-audience"],
+      "optionalClientScopes": ["offline_access"],
+      "protocolMappers": [
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "admin-api",
+      "name": "Admin API (.NET) - resource server",
+      "description": "Bearer-only: this client only validates tokens issued to other clients in this realm. No login flow, no secret -- it never authenticates itself.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "clientId": "verifier-cli",
+      "name": "Local verification client (tools/verify_auth.py only)",
+      "description": "Never deployed. Only this client has directAccessGrantsEnabled, so the password grant used purely for local verification cannot leak into the real front-end client's config.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["admin-api-audience"],
+      "protocolMappers": [
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin.one",
+      "enabled": true,
+      "email": "admin.one@dev.local",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "One",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevPassword123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "agent.one",
+      "enabled": true,
+      "email": "agent.one@dev.local",
+      "emailVerified": true,
+      "firstName": "Agent",
+      "lastName": "One",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevPassword123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["agent"]
+    }
+  ]
+}

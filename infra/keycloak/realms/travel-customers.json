@@ -1,0 +1,156 @@
+{
+  "realm": "travel-customers",
+  "enabled": true,
+  "displayName": "Travel Agency - Customers",
+  "roles": {
+    "realm": [
+      {
+        "name": "customer",
+        "description": "Registered customer of the travel agency."
+      }
+    ]
+  },
+  "clientScopes": [
+    {
+      "name": "orchestrator-api-audience",
+      "description": "Injects orchestrator-api into aud so the resource server can validate audience strictly instead of trusting issuer alone.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-orchestrator-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "orchestrator-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "web-public",
+      "name": "Web (Next.js) - public client, authorization code + PKCE",
+      "description": "Real customer-facing front end. No client secret: public clients cannot leak one. directAccessGrantsEnabled is deliberately false -- password grant lives only on verifier-cli.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "https://travel-agency-REPLACE_WITH_VERCEL_DOMAIN.vercel.app/*"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["orchestrator-api-audience"],
+      "optionalClientScopes": ["offline_access"],
+      "protocolMappers": [
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "orchestrator-api",
+      "name": "Orchestrator API (FastAPI) - resource server",
+      "description": "Bearer-only: this client only validates tokens issued to other clients in this realm. No login flow, no secret -- it never authenticates itself.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "clientId": "verifier-cli",
+      "name": "Local verification client (tools/verify_auth.py only)",
+      "description": "Never deployed. Only this client has directAccessGrantsEnabled, so the password grant used purely for local verification cannot leak into the real front-end client's config.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["orchestrator-api-audience"],
+      "protocolMappers": [
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "customer.one",
+      "enabled": true,
+      "email": "customer.one@dev.local",
+      "emailVerified": true,
+      "firstName": "Customer",
+      "lastName": "One",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevPassword123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["customer"]
+    },
+    {
+      "username": "customer.two",
+      "enabled": true,
+      "email": "customer.two@dev.local",
+      "emailVerified": true,
+      "firstName": "Customer",
+      "lastName": "Two",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DevPassword123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["customer"]
+    }
+  ]
+}

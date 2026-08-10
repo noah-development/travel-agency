@@ -8,6 +8,7 @@ Usage:
     uv run python tools/dev.py reset
     uv run python tools/dev.py logs [service]
     uv run python tools/dev.py status
+    uv run python tools/dev.py keycloak-export
 
 Before running any subcommand, this validates the root .env file:
 - If it doesn't exist, it's created from .env.example and the command
@@ -38,6 +39,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 COMPOSE_FILE = REPO_ROOT / "infra" / "compose" / "docker-compose.yml"
 ENV_FILE = REPO_ROOT / ".env"
 ENV_EXAMPLE_FILE = REPO_ROOT / ".env.example"
+
+# Scratch output for `keycloak-export`, gitignored. Never the same path as
+# infra/keycloak/realms/, which holds the hand-authored, canonical realm
+# files -- see cmd_keycloak_export() for why the two must stay separate.
+KEYCLOAK_EXPORT_DIR = REPO_ROOT / "infra" / "keycloak" / "exports"
+KEYCLOAK_REALM_NAMES = ["travel-customers", "travel-admin"]
 
 _PROFILE_FLAGS: dict[str, list[str]] = {
     "messaging": ["messaging"],
@@ -98,6 +105,22 @@ def ensure_env_ready() -> bool:
     return True
 
 
+def build_export_argv(realm: str) -> list[str]:
+    """Pure argv builder for the one-off `docker compose run` that exports
+    one live realm, kept separate from execution so it's unit-testable
+    without a Docker daemon (same reasoning as build_compose_argv).
+
+    One realm per invocation, not one `--realm` flag per realm: `kc.sh
+    export` only honors the last `--realm` flag given, silently dropping
+    the rest, so a single call with multiple `--realm` flags exports only
+    the last realm instead of failing loudly about it.
+    """
+    argv = base_argv()
+    argv += ["run", "--rm", "-v", f"{KEYCLOAK_EXPORT_DIR}:/tmp/kc-export", "keycloak"]
+    argv += ["export", "--dir", "/tmp/kc-export", "--users", "realm_file", "--realm", realm]
+    return argv
+
+
 def run(argv: list[str]) -> int:
     print(" ".join(argv), flush=True)
     return subprocess.run(argv, cwd=REPO_ROOT).returncode
@@ -118,6 +141,34 @@ def cmd_reset() -> int:
     if down_code != 0:
         return down_code
     return run(build_compose_argv("up", extra=["-d"]))
+
+
+def cmd_keycloak_export() -> int:
+    """Export the live realms to KEYCLOAK_EXPORT_DIR -- a scratch,
+    gitignored directory, never infra/keycloak/realms/ itself.
+
+    The hand-authored files in infra/keycloak/realms/ are the canonical
+    source and this never overwrites them: a live Keycloak export carries
+    generated IDs, keys, and explicit-default fields the hand-written JSON
+    doesn't, so it's structurally a much larger, different document, not
+    something diffable against the canonical file. Comparing the export and
+    hand-porting anything worth keeping into the canonical file is a manual
+    step for whoever runs this.
+    """
+    KEYCLOAK_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    print(
+        "Exporting to infra/keycloak/exports/ (gitignored scratch dir), not to "
+        "infra/keycloak/realms/. Compare by hand and port over only what you want "
+        "to keep -- a live export is not a diffable copy of the hand-authored file.\n"
+        "If a real user/password was ever added via the admin console, this export "
+        "can contain a real credential hash: never commit it as-is."
+    )
+    for realm in KEYCLOAK_REALM_NAMES:
+        code = run(build_export_argv(realm))
+        if code != 0:
+            return code
+    print(f"Exported to {KEYCLOAK_EXPORT_DIR}")
+    return 0
 
 
 def cmd_status() -> int:
@@ -171,6 +222,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("status", help="Report status and health for each service.")
 
+    subparsers.add_parser(
+        "keycloak-export",
+        help=(
+            "Export the live realms to infra/keycloak/exports/ (gitignored) for "
+            "manual comparison -- never overwrites infra/keycloak/realms/."
+        ),
+    )
+
     return parser
 
 
@@ -191,6 +250,8 @@ def main(argv: list[str] | None = None) -> int:
         return run(build_compose_argv("logs", extra=extra))
     if args.command == "status":
         return cmd_status()
+    if args.command == "keycloak-export":
+        return cmd_keycloak_export()
 
     return 1
 
