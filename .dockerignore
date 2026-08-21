@@ -1,0 +1,18 @@
+# Build context for apps/orchestrator/Dockerfile is the repo root (uv
+# workspace). Keep the context small and avoid leaking local-only state.
+.venv/
+node_modules/
+.git/
+apps/web/
+infra/
+docs/
+tests/
+**/tests/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.idea/
+dist/
+build/
+.env
